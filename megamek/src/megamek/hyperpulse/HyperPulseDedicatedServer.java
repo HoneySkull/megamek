@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2025 The MegaMek Team. All Rights Reserved.
+ * Copyright (C) 2025-2025 The MegaMek Team. All Rights Reserved.
  *
  * This file is part of MegaMek.
  *
@@ -30,6 +30,7 @@
  * <https://www.xbox.com/en-US/developers/rules> and it is not endorsed by or
  * affiliated with Microsoft.
  */
+
 package megamek.hyperpulse;
 
 import java.io.IOException;
