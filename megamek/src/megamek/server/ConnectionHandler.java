@@ -46,8 +46,8 @@ public class ConnectionHandler implements Runnable {
     AbstractConnection connection;
 
     boolean shouldStop = false;
-
-    ConnectionHandler(AbstractConnection c) {
+    
+    public ConnectionHandler(AbstractConnection c) {
         connection = c;
     }
 

@@ -1,0 +1,74 @@
+/*
+ * Copyright (C) 2025 The MegaMek Team. All Rights Reserved.
+ *
+ * This file is part of MegaMek.
+ *
+ * MegaMek is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License (GPL),
+ * version 3 or (at your option) any later version,
+ * as published by the Free Software Foundation.
+ *
+ * MegaMek is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty
+ * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+ * See the GNU General Public License for more details.
+ *
+ * A copy of the GPL should have been included with this project;
+ * if not, see <https://www.gnu.org/licenses/>.
+ *
+ * NOTICE: The MegaMek organization is a non-profit group of volunteers
+ * creating free software for the BattleTech community.
+ *
+ * MechWarrior, BattleMech, `Mech and AeroTech are registered trademarks
+ * of The Topps Company, Inc. All Rights Reserved.
+ *
+ * Catalyst Game Labs and the Catalyst Game Labs logo are trademarks of
+ * InMediaRes Productions, LLC.
+ */
+package megamek.hyperpulse;
+
+import megamek.common.net.events.ConnectedEvent;
+import megamek.common.net.events.DisconnectedEvent;
+import megamek.common.net.events.PacketReceivedEvent;
+import megamek.common.net.listeners.ConnectionListener;
+import megamek.logging.MMLogger;
+
+/**
+ * ConnectionListener specifically for the {@link HyperPulseServer HyperPulseServer} to handle incoming connect,
+ * disconnect, and packet handling.
+ */
+public class HyperPulseConnectionListener extends ConnectionListener {
+    private HyperPulseServer server = null;
+    private static final MMLogger logger = MMLogger.create(HyperPulseConnectionListener.class);
+
+    /**
+     * Constructs a new instance of {@code HyperPulseConnectionListener} associated with the specified
+     * {@code HyperPulseServer}.
+     *
+     * @param server the {@code HyperPulseServer} instance that this listener will be associated with for handling
+     *               incoming connections, disconnections, and packet events.
+     */
+    public HyperPulseConnectionListener(HyperPulseServer server) {
+        this.server = server;
+    }
+
+    @Override
+    public void connected(ConnectedEvent evt) {
+        // This doesn't appear to ever be invoked by the abstractConnection.
+        super.connected(evt);
+        logger.info("A new connection detected!");
+    }
+
+    @Override
+    public void disconnected(DisconnectedEvent evt) {
+        super.disconnected(evt);
+        logger.info("A connection was dropped....:(");
+
+    }
+
+    @Override
+    public void packetReceived(PacketReceivedEvent evt) {
+        super.packetReceived(evt);
+        logger.info(evt.getPacket().toString());
+    }
+}
