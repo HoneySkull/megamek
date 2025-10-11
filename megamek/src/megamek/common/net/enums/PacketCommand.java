@@ -196,7 +196,13 @@ public enum PacketCommand {
     ACTIONS,
 
     /** A packet containing other packets to be processed in the order they are stored. */
-    MULTI_PACKET;
+    MULTI_PACKET,
+
+    /**
+     * A packet to facilitate handshake between {@link megamek.hyperpulse.HyperPulseServer HyperPulse} server and client
+     * or {@link megamek.hyperpulse.HyperPulseServer Hyperulse} server and host.
+     */
+    HYPERPULSE_HANDSHAKE;
     //endregion Enum Declarations
 
     //region Boolean Comparison Methods
