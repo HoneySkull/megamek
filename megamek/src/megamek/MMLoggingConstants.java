@@ -56,6 +56,7 @@ public final class MMLoggingConstants {
     public static final String SC_STARTING_DEDICATED_SERVER = "Starting Dedicated Server. {}";
     public static final String SC_STARTING_HOST_SERVER = "Starting Host Server. {}";
     public static final String SC_STARTING_CLIENT_SERVER = "Starting Client Server. {}";
+    public static final String SC_STARTING_HYPERPULSE_SERVER = "Starting HyperPulse Dedicated Server. {}";
     // endregion Starting Servers/Clients
 
     // region Version Constants

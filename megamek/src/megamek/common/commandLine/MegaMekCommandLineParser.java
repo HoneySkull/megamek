@@ -68,6 +68,7 @@ public class MegaMekCommandLineParser extends AbstractCommandLineParser {
     private boolean ratGenEditor = false;
     private boolean writeGif = false;
     private String[] restArgs = new String[0];
+    private boolean hyperpulse = false; //Hyperpulse is an experimental type of dedicated server for local remote hosting.
 
     public MegaMekCommandLineParser(String... args) {
         super(args);
@@ -75,6 +76,10 @@ public class MegaMekCommandLineParser extends AbstractCommandLineParser {
 
     public boolean dedicatedServer() {
         return dedicatedServer;
+    }
+
+    public boolean hyperPulse() {
+        return hyperpulse;
     }
 
     public boolean host() {
@@ -165,6 +170,9 @@ public class MegaMekCommandLineParser extends AbstractCommandLineParser {
                         break;
                     case DEDICATED:
                         dedicatedServer = true;
+                        break;
+                    case HYPERPULSE:
+                        hyperpulse = true;
                         break;
                     case HOST:
                         host = true;

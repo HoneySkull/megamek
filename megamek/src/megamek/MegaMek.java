@@ -65,6 +65,7 @@ import megamek.common.commandLine.MegaMekCommandLineParser;
 import megamek.common.net.marshalling.SanityInputFilter;
 import megamek.common.preference.PreferenceManager;
 import megamek.common.ui.RATGeneratorEditor;
+import megamek.hyperpulse.HyperPulseDedicatedServer;
 import megamek.logging.MMLogger;
 import megamek.server.DedicatedServer;
 import megamek.utilities.GifWriter;
@@ -129,6 +130,11 @@ public class MegaMek {
         LOGGER.info(ManagementFactory.getRuntimeMXBean().getInputArguments());
 
         String[] restArgs = parser.getRestArgs();
+
+        if (parser.hyperPulse()) {
+            startHyperPulseServer(restArgs);
+            return;
+        }
 
         if (parser.dedicatedServer()) {
             startDedicatedServer(restArgs);
@@ -195,6 +201,18 @@ public class MegaMek {
     private static void startDedicatedServer(String... args) {
         LOGGER.info(MMLoggingConstants.SC_STARTING_DEDICATED_SERVER, Arrays.toString(args));
         DedicatedServer.start(args);
+    }
+
+    /**
+     * Starts a HyperPulse dedicated server with arguments in args.  The HyperPulse dedicated server is designed
+     * to allow a local host and clients to connect through this server so that the host can configure a private
+     * game locally without a need to configure fire wall settings.
+     *
+     * @param args the arguments to the HyperPulse dedicated server.
+     */
+    private static void startHyperPulseServer(String... args) {
+        LOGGER.info(MMLoggingConstants.SC_STARTING_HYPERPULSE_SERVER, Arrays.toString(args));
+        HyperPulseDedicatedServer.start(args);
     }
 
     /**

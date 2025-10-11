@@ -62,7 +62,8 @@ public enum MegaMekCommandLineFlag {
     ASC(Messages.getString("MegaMek.Help.UnitAlphastrikeConversion")),
     EDIT_RAT_GEN(Messages.getString("MegaMek.Help.RatgenEdit")),
     DATA_DIR(Messages.getFormattedString("MegaMek.Help.DataDir", Configuration.dataDir())),
-    GIF(Messages.getString("MegaMek.Help.Gif"));
+    GIF(Messages.getString("MegaMek.Help.Gif")),
+    HYPERPULSE(Messages.getString("MegaMek.Help.Hyperpulse"));
     // endregion Enum Declarations
 
     public final String helpText;
