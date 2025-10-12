@@ -34,6 +34,7 @@
 package megamek.hyperpulse;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.atLeast;
@@ -45,9 +46,40 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.logging.Logger;
 
+import megamek.common.net.connections.AbstractConnection;
 import org.junit.jupiter.api.Test;
 
 public class HyperPulseServerTest {
+
+    @Test
+    void testGetConnectionFromIdWithValidId() {
+        ServerSocket serverSocket = mock(ServerSocket.class);
+        HyperPulseServer server = new HyperPulseServer(serverSocket);
+
+        AbstractConnection mockConnection = mock(AbstractConnection.class);
+        when(mockConnection.getId()).thenReturn(42);
+
+        // Simulate adding the connection to the list in the server
+        server.addConnection(mockConnection);
+
+        // Verify that the correct connection is returned for a valid ID
+        assertEquals(mockConnection, server.getConnectionFromId(42));
+    }
+
+    @Test
+    void testGetConnectionFromIdWithInvalidId() {
+        ServerSocket serverSocket = mock(ServerSocket.class);
+        HyperPulseServer server = new HyperPulseServer(serverSocket);
+
+        AbstractConnection mockConnection = mock(AbstractConnection.class);
+        when(mockConnection.getId()).thenReturn(1);
+
+        // Simulate adding the connection to the list in the server
+        server.addConnection(mockConnection);
+
+        // Verify that the method returns null for an invalid ID
+        assertNull(server.getConnectionFromId(99));
+    }
 
     @Test
     void testProcessNewClientConnectionWithValidSocket() {

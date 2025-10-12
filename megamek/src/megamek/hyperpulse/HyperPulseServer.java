@@ -44,8 +44,10 @@ import java.util.function.Consumer;
 
 import megamek.common.annotations.Nullable;
 import megamek.common.net.connections.AbstractConnection;
+import megamek.common.net.enums.PacketCommand;
 import megamek.common.net.factories.ConnectionFactory;
 import megamek.common.net.listeners.ConnectionListener;
+import megamek.common.net.packets.Packet;
 import megamek.logging.MMLogger;
 import megamek.server.ConnectionHandler;
 
@@ -111,7 +113,7 @@ public class HyperPulseServer implements Runnable {
     }
 
     /**
-     * Listen on the Hyperpulse's designated port for incoming connections from external clients or hosts.
+     * Listen on the HyperPulse's designated port for incoming connections from external clients or hosts.
      */
     @Override
     public void run() {
@@ -131,7 +133,7 @@ public class HyperPulseServer implements Runnable {
 
     /**
      * Respond to an incoming connection and set it up to process traffic.  This will be called once for each incoming
-     * connection.
+     * connection.  Both clients and hosts will be accepted.
      *
      * @param socket - A new connection has been detected this is the socket for the new connection.  If the passed in
      *               socket is null, the call will be ignored.
@@ -147,8 +149,8 @@ public class HyperPulseServer implements Runnable {
                 logger.info("CS: accepting player connection #{}...", id);
 
                 ConnectionHandler ch = launchConnectionHandlerThread(createServerConnection(socket, id));
-
                 connectionHandlers.put(id, ch);
+                sendHandShake(getConnectionFromId(id));
             } catch (Exception e) {
                 //catch all here so we don't throw outside the synchronized block.
                 logger.error(e);
@@ -156,12 +158,66 @@ public class HyperPulseServer implements Runnable {
         }
     }
 
+    /**
+     * Get the next unused connection ID. Each client or host that connects to the
+     * <code>HyperPulseServer</code> will be assigned a unique ID.
+     *
+     * @return - integer server unique connection ID for the HyperPulseServer connection.
+     */
+    private int getFreeConnectionId() {
+
+        if (connectionCounter != Integer.MAX_VALUE) {
+            connectionCounter++;
+        } else {
+            connectionCounter = 0;
+        }
+
+        // recursively check for used connection IDs.
+        if (getConnectionFromId(connectionCounter) != null) {
+            return getFreeConnectionId();
+        }
+
+        return connectionCounter;
+    }
+
     private AbstractConnection createServerConnection(Socket socket, int connectionId) {
         AbstractConnection connection = ConnectionFactory.getInstance().createServerConnection(socket, connectionId);
         connection.addConnectionListener(connectionListener);
         connection.open();
-        connections.add(connection);
+        addConnection(connection);
         return connection;
+    }
+
+    @Nullable
+    public AbstractConnection getConnectionFromId(int id) {
+        return connections.stream().filter(c -> c.getId() == id).findFirst().orElse(null);
+    }
+
+    // Sends a hyperpulse handshake packet to the client. It's specific to the hyperpulse protocol.
+    private void sendHandShake(AbstractConnection connection) {
+        // Create a new Hyper Pulse Handshake Packet
+        Packet handshakePacket = new Packet(PacketCommand.HYPERPULSE_HANDSHAKE);
+
+        // Send the packet through the passed in connection.
+        if (connection != null) {
+            connection.send(handshakePacket);
+        } else {
+            logger.error("CS: attempt to send handshake packet to null connection.");
+        }
+    }
+
+    /**
+     * Adds a connection to the list of active connections managed by the server.
+     *
+     * @param connection the {@link AbstractConnection} object representing the connection to be added. This must not be
+     *                   null to avoid potential issues while managing connections.
+     */
+    protected void addConnection(AbstractConnection connection) {
+        if (connection != null) {
+            connections.add(connection);
+        } else {
+            logger.error("CS: attempt to add null connection to list of connections.");
+        }
     }
 
     private ConnectionHandler launchConnectionHandlerThread(AbstractConnection connection) {
@@ -176,16 +232,6 @@ public class HyperPulseServer implements Runnable {
      */
     public static @Nullable HyperPulseServer getServerInstance() {
         return serverInstance;
-    }
-
-    /**
-     * Get the next unused connection ID. Each client or host that connects to the
-     * <code>ConnectServer</code> will be assigned a unique ID.
-     *
-     * @return - integer server unique connection ID for the ConnectServer connection.
-     */
-    private int getFreeConnectionId() {
-        return connectionCounter++;
     }
 
     /**

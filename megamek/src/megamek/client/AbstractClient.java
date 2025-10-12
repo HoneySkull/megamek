@@ -520,6 +520,11 @@ public abstract class AbstractClient implements IClient {
                           (String) packet.getObject(1),
                           (Base64Image) packet.getObject(2)));
                     break;
+                case HYPERPULSE_HANDSHAKE:
+                    // TODO: collect the Host ID from the player UI and send it back to the server in a
+                    //  HYPERPULSE_HANDSHAKE packet. For now just return the player name.
+                    send(new Packet(PacketCommand.HYPERPULSE_HANDSHAKE, name));
+                    break;
                 default:
                     return false;
             }
