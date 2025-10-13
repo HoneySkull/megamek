@@ -149,6 +149,17 @@ public class SBFClient extends AbstractClient {
         }
     }
 
+    /**
+     * Handles the handshake process for the HyperPulse dedicated server communication protocol.
+     *
+     * @param packet The packet that contains relevant data for the handshake process.
+     */
+    @Override
+    protected void handleHyperPulseHandshake(Packet packet) {
+        // do nothing for now
+        return;
+    }
+
     private String assembleAndAddImages(List<SBFReportEntry> reports) {
         if (reports == null) {
             logger.error("Received a null list of reports!");

@@ -36,7 +36,11 @@
 package megamek.client;
 
 import java.awt.Image;
+import java.awt.Window;
+import java.awt.event.ContainerEvent;
 import java.awt.image.BufferedImage;
+import java.awt.Component;
+import java.awt.event.WindowEvent;
 import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
@@ -65,6 +69,7 @@ import megamek.client.generator.skillGenerators.AbstractSkillGenerator;
 import megamek.client.generator.skillGenerators.ModifiedTotalWarfareSkillGenerator;
 import megamek.client.ui.clientGUI.GUIPreferences;
 import megamek.client.ui.clientGUI.tooltip.PilotToolTip;
+import megamek.client.ui.dialogs.hyperpulse.HyperPulseHostCodeDialog;
 import megamek.client.ui.tileset.TilesetManager;
 import megamek.client.ui.util.UIUtil;
 import megamek.common.Hex;
@@ -1190,6 +1195,41 @@ public class Client extends AbstractClient {
         } catch (InvalidPacketDataException e) {
             LOGGER.error("Invalid packet data:", e);
             return false;
+        }
+    }
+
+    /**
+     * Handles the handshake process for the HyperPulse dedicated server communication protocol.
+     *
+     * @param packet The packet that contains relevant data for the handshake process.
+     */
+    @Override
+    protected void handleHyperPulseHandshake(Packet packet) {
+        promptForHostId();
+    }
+
+    /**
+     * Prompts the user for a host ID via a dialog. This method creates and displays a
+     * {@link HyperPulseHostCodeDialog} to collect the host ID from the user. If a valid
+     * host ID is entered, the method sends a handshake packet containing the host code.
+     * If the input is null or empty, no action is taken.
+     * <p>
+     * This method is typically used to establish an initial handshake or connection
+     * with a specific host in a HyperPulse client-server environment.
+     */
+    protected void promptForHostId() {
+        HyperPulseHostCodeDialog dialog = new HyperPulseHostCodeDialog(null);
+        dialog.setVisible(true);
+        String hostCode = dialog.getResult();
+        if (hostCode != null && !hostCode.isEmpty()) {
+            // TODO: Store the host code somewhere maybe as a persistent property? So that it can be retrieved by
+            //  other subclassed client types.  Otherwise, user will be prompted for the host code every time the a
+            //  bot is added.
+            // When a client connects to a hyperpulse server and receives a handshake packet, the host code is used
+            // to associate this connection with a host that's already connected to the hyperpulse server.
+            send(new Packet(PacketCommand.HYPERPULSE_HANDSHAKE, hostCode));
+        } else {
+            LOGGER.error("User cancelled HyperPulse handshake dialog.");
         }
     }
 

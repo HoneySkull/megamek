@@ -45,6 +45,7 @@ import megamek.SuiteConstants;
 import megamek.Version;
 import megamek.client.generator.RandomUnitGenerator;
 import megamek.client.ui.Base64Image;
+import megamek.client.ui.dialogs.hyperpulse.HyperPulseHostCodeDialog;
 import megamek.common.Player;
 import megamek.common.board.Board;
 import megamek.common.enums.GamePhase;
@@ -69,7 +70,6 @@ import megamek.common.preference.PreferenceManager;
 import megamek.common.units.Entity;
 import megamek.common.units.UnitNameTracker;
 import megamek.logging.MMLogger;
-import megamek.server.ConnectionHandler;
 
 /**
  * AbstractClient that handles basic client features.
@@ -440,6 +440,13 @@ public abstract class AbstractClient implements IClient {
     protected abstract boolean handleGameSpecificPacket(Packet packet) throws Exception;
 
     /**
+     * Handles the handshake process for the HyperPulse dedicated server communication protocol.
+     *
+     * @param packet The packet that contains relevant data for the handshake process.
+     */
+    protected abstract void handleHyperPulseHandshake(Packet packet);
+
+    /**
      * Handles any Packets that are independent of the game type (TW, AS...).
      *
      * @param packet The packet to handle
@@ -521,9 +528,7 @@ public abstract class AbstractClient implements IClient {
                           (Base64Image) packet.getObject(2)));
                     break;
                 case HYPERPULSE_HANDSHAKE:
-                    // TODO: collect the Host ID from the player UI and send it back to the server in a
-                    //  HYPERPULSE_HANDSHAKE packet. For now just return the player name.
-                    send(new Packet(PacketCommand.HYPERPULSE_HANDSHAKE, name));
+                    handleHyperPulseHandshake(packet);
                     break;
                 default:
                     return false;
