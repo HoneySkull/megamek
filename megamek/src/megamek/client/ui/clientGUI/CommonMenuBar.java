@@ -91,6 +91,7 @@ public class CommonMenuBar extends JMenuBar implements ActionListener, IPreferen
     private final JMenuItem gameQLoad = new JMenuItem(getString("CommonMenuBar.fileGameQuickLoad"));
     private final JMenuItem gameSaveServer = new JMenuItem(getString("CommonMenuBar.fileGameSaveServer"));
     private final JMenuItem gameConnect = new JMenuItem(getString("CommonMenuBar.fileGameConnect"));
+    private final JMenuItem gameHostHyperPulse = new JMenuItem(getString("CommonMenuBar.fileGameHostHyperPulse"));
     private final JCheckBoxMenuItem gameRoundReport = new JCheckBoxMenuItem(getString("CommonMenuBar.viewRoundReport"));
     private final JMenuItem gameEditBots = new JMenuItem(getString("CommonMenuBar.editBots"));
     private final JCheckBoxMenuItem gamePlayerList = new JCheckBoxMenuItem(getString("CommonMenuBar.viewPlayerList"));
@@ -218,6 +219,7 @@ public class CommonMenuBar extends JMenuBar implements ActionListener, IPreferen
         initMenuItem(gameQLoad, menu, FILE_GAME_QUICK_LOAD);
         initMenuItem(gameSaveServer, menu, FILE_GAME_SAVE_SERVER);
         initMenuItem(gameConnect, menu, FILE_GAME_CONNECT);
+        initMenuItem(gameHostHyperPulse, menu, FILE_GAME_HOST_HYPERPULSE);
 
         // Create the Unit List sub-menu.
         menu = new JMenu(Messages.getString("CommonMenuBar.GameMenu"));
@@ -503,6 +505,7 @@ public class CommonMenuBar extends JMenuBar implements ActionListener, IPreferen
         gameLoad.setEnabled(isMainMenu);
         gameStart.setEnabled(isMainMenu);
         gameConnect.setEnabled(isMainMenu);
+        gameHostHyperPulse.setEnabled(isLobby);
 
         gameSave.setEnabled(isLobby || (isInGame && canSave));
         gameSaveServer.setEnabled(isLobby || (isInGame && canSave));

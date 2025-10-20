@@ -204,6 +204,7 @@ public class ClientGUI extends AbstractClientGUI
     public static final String FILE_GAME_SCENARIO = "fileGameScenario";
     public static final String FILE_GAME_CONNECT_BOT = "fileGameConnectBot";
     public static final String FILE_GAME_CONNECT = "fileGameConnect";
+    public static final String FILE_GAME_HOST_HYPERPULSE = "fileGameHostHyperPulse";
     public static final String FILE_GAME_CONNECT_SBF = "fileGameConnectSbf";
     public static final String FILE_GAME_EDIT_BOTS = "editBots";
     // board submenu
@@ -775,6 +776,16 @@ public class ClientGUI extends AbstractClientGUI
     }
 
     /**
+     * Called when the user selects the "File->Connect Game to HyperPulse" menu item.  This allows the host of a local
+     * game to connect their host to a dedicated HyperPulse server which allows clients to connect remotely without
+     * having to configure firewall settings.
+     */
+    void connectGameToHyperPulseServer() {
+        // TODO: Implement the actual hyperpulse connect dialog. 'showSettings' is only for testing.
+        showSettings();
+    }
+
+    /**
      * Called when the user selects the "View->Client Settings" menu item.
      */
     private void showSettings() {
@@ -968,6 +979,9 @@ public class ClientGUI extends AbstractClientGUI
             case FILE_REFRESH_CACHE:
                 MekSummaryCache.refreshUnitData(false);
                 new Thread(mekSelectorDialog, Messages.getString("ClientGUI.mekSelectorDialog")).start();
+                break;
+            case FILE_GAME_HOST_HYPERPULSE:
+                connectGameToHyperPulseServer();
                 break;
             case VIEW_CLIENT_SETTINGS:
                 showSettings();
