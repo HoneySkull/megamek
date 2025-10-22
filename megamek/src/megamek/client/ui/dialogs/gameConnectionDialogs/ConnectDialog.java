@@ -66,29 +66,39 @@ public class ConnectDialog extends AbstractGameConnectionDialog {
     //region Initialization
     @Override
     protected JPanel createMiddlePanel() {
-        JLabel yourNameL = new JLabel(Messages.getString("MegaMek.yourNameL"), SwingConstants.RIGHT);
-        JLabel serverAddrL = new JLabel(Messages.getString("MegaMek.serverAddrL"), SwingConstants.RIGHT);
-        JLabel portL = new JLabel(Messages.getString("MegaMek.portL"), SwingConstants.RIGHT);
         setPlayerName(getClientPreferences().getLastPlayerName());
         addPlayerNameActionListener(this);
-        serverAddressField = new JTextField(getClientPreferences().getLastConnectAddr(), 16);
-        serverAddressField.addActionListener(this);
-        setPortField(new JTextField(getClientPreferences().getLastConnectPort() + "", 4));
+        setServerAddressField(new JTextField(getLastConnectAddr(), 16));
+        getServerAddressField().addActionListener(this);
+        setPortField(new JTextField(getLastConnectPort() + "", 4));
         getPortField().addActionListener(this);
 
         JPanel middlePanel = new JPanel(new GridBagLayout());
+        GridBagConstraints c = getGridBagConstraints();
+
+        addOptionRows(middlePanel, c);
+
+        return middlePanel;
+    }
+
+    protected void addOptionRows(JPanel middlePanel, GridBagConstraints c) {
+        JLabel yourNameL = new JLabel(Messages.getString("MegaMek.yourNameL"), SwingConstants.RIGHT);
+        JLabel serverAddrL = new JLabel(Messages.getString("MegaMek.serverAddrL"), SwingConstants.RIGHT);
+        JLabel portL = new JLabel(Messages.getString("MegaMek.portL"), SwingConstants.RIGHT);
+
+        addOptionRow(middlePanel, c, yourNameL, getPlayerNameField());
+        addOptionRow(middlePanel, c, serverAddrL, getServerAddressField());
+        addOptionRow(middlePanel, c, portL, getPortField());
+    }
+
+    protected static GridBagConstraints getGridBagConstraints() {
         GridBagConstraints c = new GridBagConstraints();
         c.fill = GridBagConstraints.NONE;
         c.weightx = 0.0;
         c.weighty = 0.0;
         c.insets = new Insets(5, 5, 5, 5);
         c.gridwidth = 1;
-
-        addOptionRow(middlePanel, c, yourNameL, getPlayerNameField());
-        addOptionRow(middlePanel, c, serverAddrL, serverAddressField);
-        addOptionRow(middlePanel, c, portL, getPortField());
-
-        return middlePanel;
+        return c;
     }
     //endregion Initialization
 
@@ -99,6 +109,26 @@ public class ConnectDialog extends AbstractGameConnectionDialog {
 
     public void setServerAddress(String serverAddress) {
         this.serverAddress = serverAddress;
+    }
+
+    protected JTextField getServerAddressField() {
+        return serverAddressField;
+    }
+
+    protected void setServerAddressField(JTextField serverAddressField) {
+        this.serverAddressField = serverAddressField;
+    }
+
+    protected int getLastConnectPort() {
+        return getClientPreferences().getLastConnectPort();
+    }
+
+    protected String getLastConnectAddr() {
+        return getClientPreferences().getLastConnectAddr();
+    }
+
+    protected void setLastConnectAddr(String serverAddress) {
+        getClientPreferences().setLastConnectAddr(serverAddress);
     }
     //endregion Getters and Setters
 
@@ -123,7 +153,7 @@ public class ConnectDialog extends AbstractGameConnectionDialog {
         setServerAddress(serverAddressField.getText().trim());
 
         // update settings
-        getClientPreferences().setLastConnectAddr(getServerAddress());
+        setLastConnectAddr(getServerAddress());
         setVisible(false);
     }
 }

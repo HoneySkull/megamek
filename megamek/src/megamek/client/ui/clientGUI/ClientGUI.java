@@ -107,6 +107,7 @@ import megamek.client.ui.dialogs.buttonDialogs.GameOptionsDialog;
 import megamek.client.ui.dialogs.buttonDialogs.LOSDialog;
 import megamek.client.ui.dialogs.forceDisplay.ForceDisplayDialog;
 import megamek.client.ui.dialogs.forceDisplay.ForceDisplayPanel;
+import megamek.client.ui.dialogs.gameConnectionDialogs.HostHyperPulseDialog;
 import megamek.client.ui.dialogs.helpDialogs.AbstractHelpDialog;
 import megamek.client.ui.dialogs.helpDialogs.HelpDialog;
 import megamek.client.ui.dialogs.helpDialogs.MMReadMeHelpDialog;
@@ -781,8 +782,11 @@ public class ClientGUI extends AbstractClientGUI
      * having to configure firewall settings.
      */
     void connectGameToHyperPulseServer() {
-        // TODO: Implement the actual hyperpulse connect dialog. 'showSettings' is only for testing.
-        showSettings();
+        HostHyperPulseDialog dialog = new HostHyperPulseDialog(frame);
+        dialog.setVisible(true);
+
+        // TODO: Create a HyperPulse Host Adapter here and connect it to the Dedicated HyperPulse Server with the
+        //  selected url and port fro the HypePulseDialog.
     }
 
     /**
