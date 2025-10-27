@@ -45,7 +45,6 @@ import megamek.SuiteConstants;
 import megamek.Version;
 import megamek.client.generator.RandomUnitGenerator;
 import megamek.client.ui.Base64Image;
-import megamek.client.ui.dialogs.hyperpulse.HyperPulseHostCodeDialog;
 import megamek.common.Player;
 import megamek.common.board.Board;
 import megamek.common.enums.GamePhase;
@@ -233,6 +232,7 @@ public abstract class AbstractClient implements IClient {
     /**
      * Sends the info associated with a player, usually the local game's local player but sometimes the modified version
      * of that player.
+     *
      * @param player Player instance regarding which to send the update.
      */
     public void sendPlayerInfo(Player player) {

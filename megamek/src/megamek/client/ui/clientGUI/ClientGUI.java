@@ -180,6 +180,7 @@ import megamek.common.util.AddBotUtil;
 import megamek.common.util.Distractable;
 import megamek.common.util.StringUtil;
 import megamek.common.weapons.handlers.WeaponOrderHandler;
+import megamek.hyperpulse.HyperPulseHostClient;
 import megamek.logging.MMLogger;
 
 public class ClientGUI extends AbstractClientGUI
@@ -447,6 +448,8 @@ public class ClientGUI extends AbstractClientGUI
     private boolean showFleeZone = false;
 
     private final TilesetManager tilesetManager;
+
+    private HyperPulseHostClient hpHostClient = null;
 
     // endregion Variable Declarations
 
@@ -782,11 +785,15 @@ public class ClientGUI extends AbstractClientGUI
      * having to configure firewall settings.
      */
     void connectGameToHyperPulseServer() {
-        HostHyperPulseDialog dialog = new HostHyperPulseDialog(frame);
-        dialog.setVisible(true);
+        if (hpHostClient == null) {
+            HostHyperPulseDialog dialog = new HostHyperPulseDialog(frame);
+            dialog.setVisible(true);
 
-        // TODO: Create a HyperPulse Host Adapter here and connect it to the Dedicated HyperPulse Server with the
-        //  selected url and port fro the HypePulseDialog.
+            if (dialog.isConfirmed() && dialog.dataValidation("HyperPulse.title")) {
+                hpHostClient = new HyperPulseHostClient(dialog.getServerAddress(), dialog.getPort());
+                hpHostClient.connect();
+            }
+        }
     }
 
     /**
