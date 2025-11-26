@@ -785,14 +785,22 @@ public class ClientGUI extends AbstractClientGUI
      * having to configure firewall settings.
      */
     void connectGameToHyperPulseServer() {
+        // TODO: This needs to be reworked for production.  For prototyping this is fine.
         if (hpHostClient == null) {
             HostHyperPulseDialog dialog = new HostHyperPulseDialog(frame);
             dialog.setVisible(true);
 
             if (dialog.isConfirmed() && dialog.dataValidation("HyperPulse.title")) {
                 hpHostClient = new HyperPulseHostClient(dialog.getServerAddress(), dialog.getPort());
-                hpHostClient.connect();
+                if (!hpHostClient.connect()) {
+                    hpHostClient = null;
+                    doAlertDialog(Messages.getString("HyperPulse.title"),
+                          Messages.getString("HyperPulse.connectFailed.message"));
+                }
             }
+        } else {
+            hpHostClient.die();
+            hpHostClient = null;
         }
     }
 
