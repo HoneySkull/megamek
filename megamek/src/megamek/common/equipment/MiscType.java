@@ -3241,6 +3241,7 @@ public class MiscType extends EquipmentType {
         MiscType misc = new MiscType();
 
         misc.name = "Fed Suns/Fed Commonwealth Infantry Kit (3030-3066)";
+        misc.addLookupName("Fed Suns/Fed Commonweath Infantry Kit (3030-3066)");
         misc.damageDivisor = 1.0;
         misc.setInternalName(misc.name);
         misc.addLookupName("DavionKit3030");
@@ -11330,11 +11331,11 @@ public class MiscType extends EquipmentType {
 
     public static MiscType createISBAMechanicalJumpBooster() {
         MiscType misc = new MiscType();
-        misc.name = "Mechanical Jump Booster";
+        misc.name = "Mechanical Jump Booster [BA]";
         misc.setInternalName(EquipmentTypeLookup.BA_MECHANICAL_JUMP_BOOSTER);
         misc.addLookupName("ISMechanicalJumpBooster");
         misc.addLookupName("CLMechanicalJumpBooster");
-        misc.shortName = "Jump Booster";
+        misc.shortName = "Mechanical Jump Booster";
         misc.tonnage = TONNAGE_VARIABLE;
         misc.cost = COST_VARIABLE;
         misc.flags = misc.flags.or(F_MECHANICAL_JUMP_BOOSTER).or(F_BA_EQUIPMENT);

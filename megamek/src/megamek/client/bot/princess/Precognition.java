@@ -82,8 +82,8 @@ import megamek.common.net.packets.InvalidPacketDataException;
 import megamek.common.net.packets.Packet;
 import megamek.common.options.GameOptions;
 import megamek.common.planetaryConditions.PlanetaryConditions;
-import megamek.common.units.Building;
 import megamek.common.units.Entity;
+import megamek.common.units.IBuilding;
 import megamek.common.units.UnitLocation;
 import megamek.logging.MMLogger;
 import megamek.server.SmokeCloud;
@@ -223,6 +223,9 @@ public class Precognition implements Runnable {
                 case CHANGE_HEXES:
                     var changedHexes = (Map<BoardLocation, Hex>) c.getObject(0);
                     game.getBoards().values().forEach(board -> board.setHexes(changedHexes));
+                    break;
+                case BLDG_ADD:
+                    receiveBuildingAdd(c);
                     break;
                 case BLDG_UPDATE:
                     receiveBuildingUpdate(c);
@@ -841,9 +844,15 @@ public class Precognition implements Runnable {
         }
     }
 
+    private void receiveBuildingAdd(Packet packet) throws InvalidPacketDataException {
+        for (IBuilding building : (List<IBuilding>) packet.getObject(0)) {
+            game.getBoard(building.getBoardId()).addBuildingToBoard(building);
+        }
+    }
+
     @SuppressWarnings("unchecked")
     private void receiveBuildingUpdate(Packet packet) throws InvalidPacketDataException {
-        for (Building building : (List<Building>) packet.getObject(0)) {
+        for (IBuilding building : (List<IBuilding>) packet.getObject(0)) {
             game.getBoard(building.getBoardId()).updateBuilding(building);
         }
     }

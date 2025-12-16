@@ -160,15 +160,15 @@ public class TWDamageManager implements IDamageManager {
                 return reportVec;
             }
             Entity fighter = fighters.get(hit.getLocation());
-            HitData new_hit = fighter.rollHitLocation(ToHitData.HIT_NORMAL, ToHitData.SIDE_FRONT);
-            new_hit.setBoxCars(hit.rolledBoxCars());
-            new_hit.setGeneralDamageType(hit.getGeneralDamageType());
-            new_hit.setCapital(hit.isCapital());
-            new_hit.setCapMisCritMod(hit.getCapMisCritMod());
-            new_hit.setSingleAV(hit.getSingleAV());
-            new_hit.setAttackerId(hit.getAttackerId());
+            HitData newHit = fighter.rollHitLocation(ToHitData.HIT_NORMAL, ToHitData.SIDE_FRONT);
+            newHit.setBoxCars(hit.rolledBoxCars());
+            newHit.setGeneralDamageType(hit.getGeneralDamageType());
+            newHit.setCapital(hit.isCapital());
+            newHit.setCapMisCritMod(hit.getCapMisCritMod());
+            newHit.setSingleAV(hit.getSingleAV());
+            newHit.setAttackerId(hit.getAttackerId());
             return damageEntity(fighter,
-                  new_hit,
+                  newHit,
                   damage,
                   ammoExplosion,
                   damageType,
@@ -223,9 +223,11 @@ public class TWDamageManager implements IDamageManager {
         boolean critSI = false;
         boolean critThresh = false;
 
-        // get the relevant damage for damage thresholding
+        // Per SO p.116: For weapon groups/bays, threshold critical checks use only the
+        // damage of a SINGLE weapon (singleAV), not the combined damage from all weapons
+        // that hit. This prevents massed small weapons from always triggering threshold
+        // criticals. The full damage is still applied to the target.
         int threshDamage = damage;
-        // weapon groups only get the damage to one weapon
         if ((hit.getSingleAV() > -1) && !game.getOptions()
               .booleanOption(OptionsConstants.ADVANCED_AERO_RULES_AERO_SANITY)) {
             threshDamage = hit.getSingleAV();
@@ -318,6 +320,11 @@ public class TWDamageManager implements IDamageManager {
         boolean impactArmor = (entity instanceof Mek) &&
               (entity.getArmorType(hit.getLocation()) == EquipmentType.T_ARMOR_IMPACT_RESISTANT);
         boolean bar5 = entity.getBARRating(hit.getLocation()) <= 5;
+        boolean heatArmor =
+              (entity instanceof Mek) && (entity.getArmorType(hit.getLocation())
+                    == EquipmentType.T_ARMOR_HEAT_DISSIPATING);
+        boolean abaArmor = (entity instanceof Mek) && (entity.getArmorType(hit.getLocation()) ==
+              EquipmentType.T_ARMOR_ANTI_PENETRATIVE_ABLATION);
 
         // TACs from the hit location table
         int crits;
@@ -421,35 +428,7 @@ public class TWDamageManager implements IDamageManager {
             reportVec.addElement(report);
         }
 
-        // Is the infantry in the open?
-        if (ServerHelper.infantryInOpen(entity,
-              te_hex,
-              game,
-              isPlatoon,
-              ammoExplosion,
-              hit.isIgnoreInfantryDoubleDamage())) {
-            // PBI. Damage is doubled.
-            damage *= 2;
-            report = new Report(6040);
-            report.subject = entityId;
-            report.indent(2);
-            reportVec.addElement(report);
-        }
-
-        // Is the infantry in vacuum?
-        boolean platoonOrBattleArmor = isPlatoon || isBattleArmor;
-        if (platoonOrBattleArmor &&
-              !entity.isDestroyed() &&
-              !entity.isDoomed() &&
-              game.getPlanetaryConditions().getAtmosphere().isLighterThan(Atmosphere.THIN)) {
-            // PBI. Double damage.
-            damage *= 2;
-            report = new Report(6041);
-            report.subject = entityId;
-            report.indent(2);
-            reportVec.addElement(report);
-        }
-
+        // Handle damage type effects (flechette, fragmentation, etc.) before situational modifiers
         switch (damageType) {
             case FRAGMENTATION:
                 // Fragmentation missiles deal full damage to conventional
@@ -532,6 +511,35 @@ public class TWDamageManager implements IDamageManager {
                 break;
         }
 
+        // Is the infantry in the open?
+        if (ServerHelper.infantryInOpen(entity,
+              te_hex,
+              game,
+              isPlatoon,
+              ammoExplosion,
+              hit.isIgnoreInfantryDoubleDamage())) {
+            // PBI. Damage is doubled.
+            damage *= 2;
+            report = new Report(6040);
+            report.subject = entityId;
+            report.indent(2);
+            reportVec.addElement(report);
+        }
+
+        // Is the infantry in vacuum?
+        boolean platoonOrBattleArmor = isPlatoon || isBattleArmor;
+        if (platoonOrBattleArmor &&
+              !entity.isDestroyed() &&
+              !entity.isDoomed() &&
+              game.getPlanetaryConditions().getAtmosphere().isLighterThan(Atmosphere.THIN)) {
+            // PBI. Double damage.
+            damage *= 2;
+            report = new Report(6041);
+            report.subject = entityId;
+            report.indent(2);
+            reportVec.addElement(report);
+        }
+
         // adjust VTOL rotor damage
         if ((entity instanceof VTOL) &&
               (hit.getLocation() == VTOL.LOC_ROTOR) &&
@@ -592,7 +600,7 @@ public class TWDamageManager implements IDamageManager {
                     // if we have destroyed the cargo, remove it, add a report
                     // and move on to the next piece of cargo
                     if (cargoDestroyed) {
-                        entity.dropGroundObject(cargo, false);
+                        entity.dropCarriedObject(cargo, false);
 
                         report = new Report(6721);
                         report.subject = entityId;
@@ -629,9 +637,9 @@ public class TWDamageManager implements IDamageManager {
             }
 
             if (entity.isAero()) {
-                // chance of a critical if damage greater than threshold
+                // chance of a critical if damage exceeds threshold
                 IAero a = (IAero) entity;
-                if ((threshDamage > a.getThresh(hit.getLocation()))) {
+                if (threshDamage > a.getThresh(hit.getLocation())) {
                     critThresh = true;
                     a.setCritThresh(true);
                 }
@@ -997,37 +1005,20 @@ public class TWDamageManager implements IDamageManager {
                     report.indent(3);
                     report.add(damage);
                     reportVec.addElement(report);
-                }
-
-                // If we're using optional tank damage thresholds, set up our hit
-                // effects now...
-                if ((entity instanceof Tank) &&
-                      game.getOptions().booleanOption(OptionsConstants.ADVANCED_COMBAT_VEHICLES_THRESHOLD) &&
-                      !((entity instanceof VTOL) || (entity instanceof GunEmplacement))) {
-                    int thresh = (int) Math.ceil((game.getOptions()
-                          .booleanOption(OptionsConstants.ADVANCED_COMBAT_VEHICLES_THRESHOLD_VARIABLE) ?
-                          entity.getArmor(hit) :
-                          entity.getOArmor(hit)) /
-                          (double) game.getOptions()
-                                .intOption(OptionsConstants.ADVANCED_COMBAT_VEHICLES_THRESHOLD_DIVISOR));
-
-                    // adjust for hardened armor
-                    if (hardenedArmor &&
-                          (hit.getGeneralDamageType() != HitData.DAMAGE_ARMOR_PIERCING) &&
-                          (hit.getGeneralDamageType() != HitData.DAMAGE_ARMOR_PIERCING_MISSILE) &&
-                          (hit.getGeneralDamageType() != HitData.DAMAGE_IGNORES_DMG_REDUCTION)) {
-                        thresh *= 2;
+                } else if (heatArmor && hit.getHeatWeapon() && game.getOptions()
+                      .booleanOption(OptionsConstants.PLAYTEST_3)) {
+                    // PLAYTEST3 only applies if heat_weapon is true in hitdata, which can only occur when playtest 
+                    // is on.
+                    tmpDamageHold = damage;
+                    damage = (int) Math.ceil((((double) damage) / 2));
+                    if (tmpDamageHold == 1) {
+                        damage = 1;
                     }
-
-                    if ((damage > thresh) || (entity.getArmor(hit) < damage)) {
-                        hit.setEffect(((Tank) entity).getPotCrit());
-                        ((Tank) entity).setOverThresh(true);
-                        // TACs from the hit location table
-                        crits = ((hit.getEffect() & HitData.EFFECT_CRITICAL) == HitData.EFFECT_CRITICAL) ? 1 : 0;
-                    } else {
-                        ((Tank) entity).setOverThresh(false);
-                        crits = 0;
-                    }
+                    report = new Report(6093);
+                    report.subject = entityId;
+                    report.indent(3);
+                    report.add(damage);
+                    reportVec.addElement(report);
                 }
 
                 // if there's a mast mount in the rotor, it and all other
@@ -1181,15 +1172,6 @@ public class TWDamageManager implements IDamageManager {
                 if ((tmpDamageHold > 0) && isPlatoon) {
                     damage = tmpDamageHold;
                 }
-            }
-
-            // For optional tank damage thresholds, the over thresh flag won't
-            // be set if IS is damaged, so set it here.
-            if ((entity instanceof Tank) &&
-                  ((entity.getArmor(hit) < 1) || damageIS) &&
-                  game.getOptions().booleanOption(OptionsConstants.ADVANCED_COMBAT_VEHICLES_THRESHOLD) &&
-                  !((entity instanceof VTOL) || (entity instanceof GunEmplacement))) {
-                ((Tank) entity).setOverThresh(true);
             }
 
             // is there damage remaining?
@@ -1754,8 +1736,15 @@ public class TWDamageManager implements IDamageManager {
                 // ok, we dealt damage but didn't go on to internal
                 // we get a chance of a crit, using Armor Piercing.
                 // but only if we don't have hardened, Ferro-Lamellor, or reactive armor
-                if (!hardenedArmor && !ferroLamellorArmor && !reactiveArmor) {
-                    specCrits++;
+                // PLAYTEST3 no penetrating crits with ABA, ferroLam doesn't prevent them
+                if (game.getOptions().booleanOption(OptionsConstants.PLAYTEST_3)) {
+                    if (!hardenedArmor && !abaArmor) {
+                        specCrits++;
+                    }
+                } else {
+                    if (!hardenedArmor && !ferroLamellorArmor && !reactiveArmor) {
+                        specCrits++;
+                    }
                 }
             }
             // check for breaching
@@ -1790,7 +1779,10 @@ public class TWDamageManager implements IDamageManager {
                     int critMod = entity.hasBARArmor(hit.getLocation()) ? 2 : 0;
                     critMod += (reflectiveArmor && !isBattleArmor) ? 2 : 0; // BA
                     // against impact armor, we get a +1 mod
-                    critMod += impactArmor ? 1 : 0;
+                    // PLAYTEST3 no longer has penalty for impact.
+                    if (!game.getOptions().booleanOption(OptionsConstants.PLAYTEST_3)) {
+                        critMod += impactArmor ? 1 : 0;
+                    }
                     // hardened armour has no crit penalty
                     if (!hardenedArmor) {
                         // non-hardened armor gets modifiers
@@ -1820,9 +1812,16 @@ public class TWDamageManager implements IDamageManager {
                       nukeS2S);
             }
 
-            if (isHeadHit && !entity.hasAbility(OptionsConstants.MD_DERMAL_ARMOR)) {
-                Report.addNewline(reportVec);
-                reportVec.addAll(manager.damageCrew(entity, 1));
+            if (isHeadHit) {
+                if (entity.hasAbility(OptionsConstants.MD_DERMAL_ARMOR)
+                      || entity.hasAbility(OptionsConstants.MD_DERMAL_CAMO_ARMOR)) {
+                    Report r = new Report(6651);
+                    r.subject = entity.getId();
+                    reportVec.add(r);
+                } else {
+                    Report.addNewline(reportVec);
+                    reportVec.addAll(manager.damageCrew(entity, 1));
+                }
             }
 
             // If the location has run out of internal structure, finally

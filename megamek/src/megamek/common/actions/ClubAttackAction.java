@@ -415,8 +415,14 @@ public class ClubAttackAction extends PhysicalAttackAction {
             }
         } else if (shield) {
             if (!ae.hasPassiveShield(club.getLocation())) {
-                return new ToHitData(TargetRoll.IMPOSSIBLE,
-                      "Shield not in passive mode");
+                // PLAYTEST3 no_shield mode is now the default
+                if (game.getOptions().booleanOption(OptionsConstants.PLAYTEST_3) && !ae.hasActiveShield(club.getLocation())) {
+                    return new ToHitData(TargetRoll.IMPOSSIBLE,
+                          "Shield not in default mode");
+                } else {
+                    return new ToHitData(TargetRoll.IMPOSSIBLE,
+                          "Shield not in passive mode");
+                }
             }
         } else {
             // check if location is present
@@ -470,8 +476,9 @@ public class ClubAttackAction extends PhysicalAttackAction {
         }
 
         // check facing
+        // Tripods can only club targets in front arc per IO:AE p.158
         int clubArc;
-        if (bothArms) {
+        if (bothArms || ae.isTripodMek()) {
             clubArc = Compute.ARC_FORWARD;
         } else {
             if (club.getLocation() == Mek.LOC_LEFT_ARM) {

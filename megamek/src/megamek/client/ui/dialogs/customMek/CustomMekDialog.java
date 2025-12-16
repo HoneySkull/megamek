@@ -345,11 +345,17 @@ public class CustomMekDialog extends AbstractButtonDialog
                 }
 
                 // a bunch of stuff should get disabled for all but conventional infantry
-                if (!entity.isConventionalInfantry() &&
-                      (option.getName().equals(OptionsConstants.MD_PL_ENHANCED) ||
-                            option.getName().equals(OptionsConstants.MD_PL_MASC) ||
-                            option.getName().equals(OptionsConstants.MD_CYBER_IMP_AUDIO) ||
-                            option.getName().equals(OptionsConstants.MD_CYBER_IMP_VISUAL))) {
+                // Sensory implants (audio, visual, laser, tele) are infantry-only
+                // Gas Effuser (Pheromone/Toxin) is infantry-only (IO pg 79)
+                if (!entity.isConventionalInfantry()
+                      && (option.getName().equals(OptionsConstants.MD_PL_ENHANCED)
+                      || option.getName().equals(OptionsConstants.MD_PL_MASC)
+                      || option.getName().equals(OptionsConstants.MD_CYBER_IMP_AUDIO)
+                      || option.getName().equals(OptionsConstants.MD_CYBER_IMP_VISUAL)
+                      || option.getName().equals(OptionsConstants.MD_CYBER_IMP_LASER)
+                      || option.getName().equals(OptionsConstants.MD_CYBER_IMP_TELE)
+                      || option.getName().equals(OptionsConstants.MD_GAS_EFFUSER_PHEROMONE)
+                      || option.getName().equals(OptionsConstants.MD_GAS_EFFUSER_TOXIN))) {
                     continue;
                 }
 
@@ -472,6 +478,93 @@ public class CustomMekDialog extends AbstractButtonDialog
 
     @Override
     public void optionClicked(DialogOptionComponentYPanel comp, IOption option, boolean state) {
+        // Enforce max 2 sensory implants rule for infantry
+        // Defensive check for isConventionalInfantry in case options are set through other means
+        Entity entity = entities.get(0);
+        if (state && entity.isConventionalInfantry() && isSensoryImplant(option.getName())) {
+            int count = countSelectedSensoryImplants(comp);
+            if (count >= 2) {
+                // Revert the selection
+                comp.setSelected(false);
+                JOptionPane.showMessageDialog(this,
+                      Messages.getString("CustomMekDialog.MaxSensoryImplants"),
+                      Messages.getString("CustomMekDialog.MaxSensoryImplantsTitle"),
+                      JOptionPane.WARNING_MESSAGE);
+            }
+        }
+
+        // Gas Effuser (Pheromone/Toxin) is only for Conventional Infantry (IO pg 79)
+        if (state && !entity.isConventionalInfantry()
+              && (option.getName().equals(OptionsConstants.MD_GAS_EFFUSER_PHEROMONE)
+              || option.getName().equals(OptionsConstants.MD_GAS_EFFUSER_TOXIN))) {
+            comp.setSelected(false);
+            JOptionPane.showMessageDialog(this,
+                  Messages.getString("CustomMekDialog.GasEffuserInfantryOnly"),
+                  Messages.getString("CustomMekDialog.GasEffuserInfantryOnlyTitle"),
+                  JOptionPane.WARNING_MESSAGE);
+        }
+
+        // Can only have one Gas Effuser type at a time (IO pg 79)
+        if (state && option.getName().equals(OptionsConstants.MD_GAS_EFFUSER_PHEROMONE)
+              && hasOtherGasEffuserSelected(comp, OptionsConstants.MD_GAS_EFFUSER_TOXIN)) {
+            comp.setSelected(false);
+            JOptionPane.showMessageDialog(this,
+                  Messages.getString("CustomMekDialog.GasEffuserOnlyOne"),
+                  Messages.getString("CustomMekDialog.GasEffuserOnlyOneTitle"),
+                  JOptionPane.WARNING_MESSAGE);
+        }
+
+        if (state && option.getName().equals(OptionsConstants.MD_GAS_EFFUSER_TOXIN)
+              && hasOtherGasEffuserSelected(comp, OptionsConstants.MD_GAS_EFFUSER_PHEROMONE)) {
+            comp.setSelected(false);
+            JOptionPane.showMessageDialog(this,
+                  Messages.getString("CustomMekDialog.GasEffuserOnlyOne"),
+                  Messages.getString("CustomMekDialog.GasEffuserOnlyOneTitle"),
+                  JOptionPane.WARNING_MESSAGE);
+        }
+    }
+
+    /**
+     * Checks if the given option name is a sensory implant.
+     */
+    private boolean isSensoryImplant(String optionName) {
+        return optionName.equals(OptionsConstants.MD_CYBER_IMP_AUDIO)
+              || optionName.equals(OptionsConstants.MD_CYBER_IMP_VISUAL)
+              || optionName.equals(OptionsConstants.MD_CYBER_IMP_LASER)
+              || optionName.equals(OptionsConstants.MD_CYBER_IMP_TELE);
+    }
+
+    /**
+     * Counts the number of sensory implants currently selected, excluding the given component.
+     */
+    private int countSelectedSensoryImplants(DialogOptionComponentYPanel excludeComp) {
+        int count = 0;
+        for (DialogOptionComponentYPanel optComp : optionComps) {
+            if (optComp == excludeComp) {
+                continue;
+            }
+            if (isSensoryImplant(optComp.getOption().getName())
+                  && Boolean.TRUE.equals(optComp.getValue())) {
+                count++;
+            }
+        }
+        return count;
+    }
+
+    /**
+     * Checks if another gas effuser of the specified type is already selected.
+     */
+    private boolean hasOtherGasEffuserSelected(DialogOptionComponentYPanel excludeComp, String otherEffuserName) {
+        for (DialogOptionComponentYPanel optComp : optionComps) {
+            if (optComp == excludeComp) {
+                continue;
+            }
+            if (optComp.getOption().getName().equals(otherEffuserName)
+                  && Boolean.TRUE.equals(optComp.getValue())) {
+                return true;
+            }
+        }
+        return false;
     }
 
     @Override
@@ -576,17 +669,17 @@ public class CustomMekDialog extends AbstractButtonDialog
         txtDeploymentOffset.setText(Integer.toString(entity.getStartingOffset(false)));
         txtDeploymentWidth.setText(Integer.toString(entity.getStartingWidth(false)));
 
-        MapSettings ms = clientGUI.getClient().getMapSettings();
-        int bh = ms.getBoardHeight() * ms.getMapHeight();
-        int bw = ms.getBoardWidth() * ms.getMapWidth();
+        MapSettings mapSettings = clientGUI.getClient().getMapSettings();
+        int boardHeight = mapSettings.getBoardHeight() * mapSettings.getMapHeight();
+        int boardWidth = mapSettings.getBoardWidth() * mapSettings.getMapWidth();
 
-        int x = Math.min(entity.getStartingAnyNWx(false) + 1, bw);
+        int x = Math.min(entity.getStartingAnyNWx(false) + 1, boardWidth);
         spinStartingAnyNWx.setValue(x);
-        int y = Math.min(entity.getStartingAnyNWy(false) + 1, bh);
+        int y = Math.min(entity.getStartingAnyNWy(false) + 1, boardHeight);
         spinStartingAnyNWy.setValue(y);
-        x = Math.min(entity.getStartingAnySEx(false) + 1, bw);
-        spinStartingAnySEy.setValue(x);
-        y = Math.min(entity.getStartingAnySEy(false) + 1, bh);
+        x = Math.min(entity.getStartingAnySEx(false) + 1, boardWidth);
+        spinStartingAnySEx.setValue(x);
+        y = Math.min(entity.getStartingAnySEy(false) + 1, boardHeight);
         spinStartingAnySEy.setValue(y);
 
         boolean enableDeploymentZoneControls = choDeploymentZone.isEnabled() &&
@@ -1192,30 +1285,35 @@ public class CustomMekDialog extends AbstractButtonDialog
 
         boolean eligibleForOffBoard = true;
         int boardHeight;
-        int boardWeight;
+        int boardWidth;
+        MapSettings mapSettings;
+
         if (this.clientGUI != null) {
-            boardHeight = clientGUI.getClient().getMapSettings().getBoardHeight();
-            boardWeight = clientGUI.getClient().getMapSettings().getBoardWidth();
+            mapSettings = clientGUI.getClient().getMapSettings();
         } else {
-            boardHeight = client.getMapSettings().getBoardHeight();
-            boardWeight = client.getMapSettings().getBoardWidth();
+            mapSettings = client.getMapSettings();
         }
-        int x = Math.min(entity.getStartingAnyNWx(false) + 1, boardWeight);
-        SpinnerNumberModel mStartingAnyNWx = new SpinnerNumberModel(x, 0, boardWeight, 1);
+
+        boardHeight = mapSettings.getMapHeight() * mapSettings.getBoardHeight();
+        boardWidth = mapSettings.getMapWidth() * mapSettings.getBoardWidth();
+
+        int x = Math.min(entity.getStartingAnyNWx(false) + 1, boardWidth);
+        SpinnerNumberModel mStartingAnyNWx = new SpinnerNumberModel(x, 0, boardWidth, 1);
         spinStartingAnyNWx = new JSpinner(mStartingAnyNWx);
         spinStartingAnyNWx.setValue(x);
         int y = Math.min(entity.getStartingAnyNWy(false) + 1, boardHeight);
         SpinnerNumberModel mStartingAnyNWy = new SpinnerNumberModel(y, 0, boardHeight, 1);
         spinStartingAnyNWy = new JSpinner(mStartingAnyNWy);
         spinStartingAnyNWy.setValue(y);
-        x = Math.min(entity.getStartingAnySEx(false) + 1, boardWeight);
-        SpinnerNumberModel mStartingAnySEx = new SpinnerNumberModel(x, 0, boardWeight, 1);
+        x = Math.min(entity.getStartingAnySEx(false) + 1, boardWidth);
+        SpinnerNumberModel mStartingAnySEx = new SpinnerNumberModel(x, 0, boardWidth, 1);
         spinStartingAnySEx = new JSpinner(mStartingAnySEx);
         spinStartingAnySEx.setValue(x);
         y = Math.min(entity.getStartingAnySEy(false) + 1, boardHeight);
         SpinnerNumberModel mStartingAnySEy = new SpinnerNumberModel(y, 0, boardHeight, 1);
         spinStartingAnySEy = new JSpinner(mStartingAnySEy);
         spinStartingAnySEy.setValue(y);
+
         for (Entity e : entities) {
             // TODO : This check is good for now, but at some point we want atmospheric flying droppers to be able to
             //  lob offboard missiles and we could use it in space for extreme range bearings-only fights, plus
@@ -1250,7 +1348,8 @@ public class CustomMekDialog extends AbstractButtonDialog
         mainPanel.add(panButtons, GBC.eol().anchor(GridBagConstraints.CENTER));
 
         JScrollPane scrEquip = new JScrollPane(panEquip);
-        if (!multipleEntities) {
+        // Don't show the crew panel if there's multiple entities or no crew to show
+        if (!multipleEntities && panCrewMember.length > 0) {
             if (panCrewMember.length > 1) {
                 for (int i = 0; i < panCrewMember.length; i++) {
                     JScrollPane memberScrollPane = new JScrollPane(panCrewMember[i]);
